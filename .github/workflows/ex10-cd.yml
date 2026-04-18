@@ -1,10 +1,6 @@
 name: EX-10 Continuos Delivery
 
 on: # Listen for the build workflow by name.
-    workflow_run:
-      workflows: ["EX-10 Continuos Integration"]
-      types:
-      - completed
     pull_request:
       types:
       - closed
@@ -28,20 +24,31 @@ jobs:
     # Use a fresh runner for the deployment simulation.
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Download build artifact
-        # Download the exact artifact produced by the build run.
-        uses: actions/download-artifact@v4
-        if: github.event_name == 'workflow_run'
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          path: downloaded-artifact
-          run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Show downloaded files
-        # Quick visibility step so students can see what arrived from the build.
+    steps:
+
+      - name: Get latest successful CI run ID
+        id: get-run
+        run: |
+          RUN_ID=$(gh run list \
+            --workflow "EX-10 Continuos Integration" \
+            --branch main \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Download artifact from CI run
+        run: |
+          gh run download ${{ steps.get-run.outputs.run_id }} \
+            -n $ARTIFACT_NAME \
+            -D downloaded-artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Verify artifact
         run: ls -R downloaded-artifact
 
       - name: Load Docker image
