@@ -80,10 +80,25 @@ jobs:
             aws ecr get-login-password --region $AWS_REGION \
             | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-        - name: Build & Push
+        - name: Build & Tag Image
           run: |
             docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
             docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+
+        - name: Run Trivy vulnerability scanner
+          uses: aquasecurity/trivy-action@0.35.0
+          with:
+            image-ref: '$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG'
+            format: 'table'
+            exit-code: '1'
+            ignore-unfixed: true
+            vuln-type: 'os,fs'
+            severity: 'CRITICAL,HIGH'
+
+
+        - name: Push Image to ECR
+          run: | 
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
