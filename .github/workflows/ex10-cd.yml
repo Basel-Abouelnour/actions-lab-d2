@@ -7,17 +7,23 @@ on: # Listen for the build workflow by name.
       branches:
       - main
       
+permissions:
+  id-token: write
+  contents: read
+
+# env:
+
 env:
+  # Keep common image values in one place so the build steps stay readable.
   IMAGE_NAME: tiny-health-app
   IMAGE_TAR: tiny-health-app.tar
-  ARTIFACT_NAME: tiny-health-app-image
+  ARTIFACT_NAME: tiny-health-app-image 
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPOSITORY: actions/lab
+  IMAGE_TAG: ${{ github.run_id }}
   CONTAINER_NAME: tiny-health-container
   APP_PORT: "8000"
-
-permissions:
-  # Read access is enough because this workflow only downloads artifacts and reads repo data.
-  actions: read
-  contents: read
 
 jobs:
   deploy-package:
@@ -26,42 +32,23 @@ jobs:
 
 
     steps:
-
-      - name: Get latest successful CI run ID
-        id: get-run
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+            role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/actions-ecr
+            aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Fetch the caller identity
+        run: | 
+            aws sts get-caller-identity
+      - name: Login to ECR
         run: |
-          RUN_ID=$(gh run list \
-            --workflow "EX-10 Continuos Integration" \
-            --branch main \
-            --status success \
-            --limit 1 \
-            --json databaseId \
-            --jq '.[0].databaseId')
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
-
-      - name: Download artifact from CI run
+      - name: Pull Docker Image
         run: |
-          gh run download ${{ steps.get-run.outputs.run_id }} \
-            -n $ARTIFACT_NAME \
-            -D downloaded-artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Verify artifact
-        run: ls -R downloaded-artifact
-
-      - name: Load Docker image
-        # Turn the saved artifact file back into a Docker image.
-        run: docker load --input "downloaded-artifact/${IMAGE_TAR}"
-
-      - name: Recreate image tag from build run
-        # Rebuild the same date-plus-run-id tag the build workflow created.
-        id: image-tag
-        run: |
-          BUILD_DATE="$(echo "${{ github.action.build.data }}" | cut -dT -f1)"
-          IMAGE_TAG="${BUILD_DATE}-${{ github.action.build.id }}"
-          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Start container
         # Start the exact same tagged image that the build workflow created.
@@ -69,7 +56,8 @@ jobs:
           docker run -d \
             --name "${CONTAINER_NAME}" \
             -p "${APP_PORT}:8000" \
-            "${IMAGE_NAME}:${{ steps.image-tag.outputs.image_tag }}"
+            "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
       - name: Show running container
         run: | 
           docker ps
