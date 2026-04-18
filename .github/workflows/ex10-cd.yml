@@ -2,7 +2,7 @@ name: EX-10 Continuos Delivery
 
 on: # Listen for the build workflow by name.
     workflow_run:
-      workflows: ["build"]
+      workflows: ["EX-10 Continuos Integration"]
       types:
       - completed
     pull_request:
