@@ -27,7 +27,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
   ECR_REPOSITORY: actions/lab
-  IMAGE_TAG: ${{ github.action.run_id }}
+  IMAGE_TAG: ${{ github.run_id }}
 
 jobs:
   run-tests:
