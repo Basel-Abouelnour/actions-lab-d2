@@ -37,6 +37,7 @@ jobs:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           path: downloaded-artifact
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Show downloaded files
         # Quick visibility step so students can see what arrived from the build.
