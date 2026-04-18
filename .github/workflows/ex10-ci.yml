@@ -65,51 +65,6 @@ jobs:
           with:
               python-version: "3.12"
 
-        - name: Set image tag
-        # Use today's UTC date plus the GitHub run ID.
-        # This keeps the tag easy to explain and still unique for the run.
-          id: image-tag
-          run: |
-            TODAY="$(date -u +%Y-%m-%d)"
-            IMAGE_TAG="${TODAY}-${GITHUB_RUN_ID}"
-            echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-
-        # - name: Build Docker image 
-        # # Create the packaged application image with one traceable tag.
-        # # The deploy workflow will run this exact same tag later.
-        #   run: |
-        #     docker build \
-        #     -t "${IMAGE_NAME}:${{ steps.image-tag.outputs.image_tag }}" \
-        #     .
-
-        # - name: Save Docker image as artifact file
-        # # Convert that exact tagged image into a file that can be reused later.
-        #   run: docker save "${IMAGE_NAME}:${{ steps.image-tag.outputs.image_tag }}" -o "${IMAGE_TAR}"
-        # - name: Login to ECR
-        #   run: |
-        #    docker login --username AWS --password-stdin ${{ secrets.ECR_LOGIN_PASSWRD }}
-
-        # - name: Build & Push
-        #   run: |
-        #     docker build -t ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG .
-        #     docker tag ${{ secrets.ECR_REPOSITORY }}:IMAGE_TAG ${{ secrets.ECR_REPOSITORY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-        #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        # # - name: Upload build artifact
-        # # # Store the packaged output so a later workflow can use the exact same package.
-        # #   uses: actions/upload-artifact@v4
-        # #   with:
-        # #     name: ${{ env.ARTIFACT_NAME }}
-        # #     path: ${{ env.IMAGE_TAR }}
-        # #     retention-days: 7
-
-# jobs:
-#   push:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
-
         - name: Configure AWS Credentials (OIDC)
           uses: aws-actions/configure-aws-credentials@v4
           with:
