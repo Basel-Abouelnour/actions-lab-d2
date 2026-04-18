@@ -32,6 +32,7 @@ jobs:
       - name: Download build artifact
         # Download the exact artifact produced by the build run.
         uses: actions/download-artifact@v4
+        if: github.event_name == 'workflow_run'
         with:
           name: ${{ env.ARTIFACT_NAME }}
           github-token: ${{ github.token }}
