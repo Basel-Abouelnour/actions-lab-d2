@@ -13,12 +13,22 @@ on:
     # Allow a safe manual run before students trigger it with a code change.
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
+# env:
+
 env:
   # Keep common image values in one place so the build steps stay readable.
   IMAGE_NAME: tiny-health-app
   IMAGE_TAR: tiny-health-app.tar
   ARTIFACT_NAME: tiny-health-app-image 
-  
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPOSITORY: actions/lab
+  IMAGE_TAG: ${{ github.action.run_id }}
+
 jobs:
   run-tests:
     # The runner is the temporary machine that executes the steps below.
@@ -64,22 +74,59 @@ jobs:
             IMAGE_TAG="${TODAY}-${GITHUB_RUN_ID}"
             echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
-        - name: Build Docker image 
-        # Create the packaged application image with one traceable tag.
-        # The deploy workflow will run this exact same tag later.
-          run: |
-            docker build \
-            -t "${IMAGE_NAME}:${{ steps.image-tag.outputs.image_tag }}" \
-            .
+        # - name: Build Docker image 
+        # # Create the packaged application image with one traceable tag.
+        # # The deploy workflow will run this exact same tag later.
+        #   run: |
+        #     docker build \
+        #     -t "${IMAGE_NAME}:${{ steps.image-tag.outputs.image_tag }}" \
+        #     .
 
-        - name: Save Docker image as artifact file
-        # Convert that exact tagged image into a file that can be reused later.
-          run: docker save "${IMAGE_NAME}:${{ steps.image-tag.outputs.image_tag }}" -o "${IMAGE_TAR}"
+        # - name: Save Docker image as artifact file
+        # # Convert that exact tagged image into a file that can be reused later.
+        #   run: docker save "${IMAGE_NAME}:${{ steps.image-tag.outputs.image_tag }}" -o "${IMAGE_TAR}"
+        # - name: Login to ECR
+        #   run: |
+        #    docker login --username AWS --password-stdin ${{ secrets.ECR_LOGIN_PASSWRD }}
 
-        - name: Upload build artifact
-        # Store the packaged output so a later workflow can use the exact same package.
-          uses: actions/upload-artifact@v4
+        # - name: Build & Push
+        #   run: |
+        #     docker build -t ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG .
+        #     docker tag ${{ secrets.ECR_REPOSITORY }}:IMAGE_TAG ${{ secrets.ECR_REPOSITORY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+        #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        # # - name: Upload build artifact
+        # # # Store the packaged output so a later workflow can use the exact same package.
+        # #   uses: actions/upload-artifact@v4
+        # #   with:
+        # #     name: ${{ env.ARTIFACT_NAME }}
+        # #     path: ${{ env.IMAGE_TAR }}
+        # #     retention-days: 7
+
+# jobs:
+#   push:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+        - name: Configure AWS Credentials (OIDC)
+          uses: aws-actions/configure-aws-credentials@v4
           with:
-            name: ${{ env.ARTIFACT_NAME }}
-            path: ${{ env.IMAGE_TAR }}
-            retention-days: 7
+            role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/actions-ecr
+            aws-region: ${{ env.AWS_REGION }}
+      
+        - name: Fetch the caller identity
+          run: | 
+            aws sts get-caller-identity
+
+        - name: Login to ECR
+          run: |
+            aws ecr get-login-password --region $AWS_REGION \
+            | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+        - name: Build & Push
+          run: |
+            docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+            docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
