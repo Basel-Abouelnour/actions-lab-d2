@@ -92,10 +92,9 @@ jobs:
           docker pull ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
 
         
-      - name: Show Current Images
+      - name: List Docker images on EC2
         run: |
-          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \ 
-          "docker image ls"
+          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} "docker image ls"
 
       - name: Start container
         # Start the exact same tagged image that the build workflow created.
