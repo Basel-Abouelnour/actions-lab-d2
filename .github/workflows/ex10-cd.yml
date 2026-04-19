@@ -85,7 +85,7 @@ jobs:
           ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} << 'EOF'
             set -e
 
-            docker login --username AWS ${{ secrets.ECR_LOGIN_PASSWRD }} ${{ env.ECR_REGISTRY }}
+            docker login --username AWS --password ${{ secrets.ECR_LOGIN_PASSWRD }} ${{ env.ECR_REGISTRY }}
 
             docker pull $ECR_REGISTRY/$ECR_REPOSITORY:latest
           EOF
