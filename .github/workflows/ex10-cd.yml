@@ -83,7 +83,7 @@ jobs:
       - name: Pulling image 
         run: | 
           ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \
-          "docker login --username AWS --password-stdin ${{ secrets.ECR_LOGIN_PASSWRD }}"
+          "docker login --username AWS ${{ secrets.ECR_LOGIN_PASSWRD }}"
 
       - name: Pull Docker Image
         run: |
