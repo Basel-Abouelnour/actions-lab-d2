@@ -68,7 +68,7 @@ jobs:
       
       - name: Copying & Executing scripts
         run: |
-          scp -i ~/.ssh/ec2_key ./scripts/ ubuntu@${{ vars.EC2_IP }}:/tmp/
+          scp -i -r ~/.ssh/ec2_key ./scripts/ ubuntu@${{ vars.EC2_IP }}:/tmp/
           ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} "chmod +x -R /tmp/scripts/"
           ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} "bash /tmp/scripts/assessment/prepare-ubuntu-vm.sh"
          
