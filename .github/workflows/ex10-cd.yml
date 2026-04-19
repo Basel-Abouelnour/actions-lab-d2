@@ -66,6 +66,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
       
+      - name: Listing files
+        run: ls
       - name: Copying & Executing scripts
         run: |
           scp -i -r ~/.ssh/ec2_key ./scripts/ ubuntu@${{ vars.EC2_IP }}:/tmp/
