@@ -80,16 +80,17 @@ jobs:
           "chmod +x /tmp/scripts/assessment/prepare-ubuntu-vm.sh && \
           sudo /tmp/scripts/assessment/prepare-ubuntu-vm.sh"
       
-      - name: Pulling image 
-        run: | 
-          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \
-          "docker login --username AWS ${{ secrets.ECR_LOGIN_PASSWRD }}"
-
-      - name: Pull Docker Image
+      - name: Pull image on EC2
         run: |
-          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \
-          "docker pull $ECR_REGISTRY/$ECR_REPOSITORY:latest"
-          
+          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} << 'EOF'
+            set -e
+
+            aws ecr get-login-password --region $AWS_REGION | \
+            docker login --username AWS --password-stdin $ECR_REGISTRY
+
+            docker pull $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          EOF
+        
       - name: Show Current Images
         run: |
           ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \ 
