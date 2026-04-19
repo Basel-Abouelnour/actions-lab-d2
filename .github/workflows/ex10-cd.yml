@@ -95,15 +95,16 @@ jobs:
       - name: Show Current Images
         run: |
           ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \ 
-          "docker images"
+          "docker image ls"
 
-      # - name: Start container
-      #   # Start the exact same tagged image that the build workflow created.
-      #   run: |
-      #     docker run -d \
-      #       --name "${CONTAINER_NAME}" \
-      #       -p "${APP_PORT}:8000" \
-      #       "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+      - name: Start container
+        # Start the exact same tagged image that the build workflow created.
+        run: |
+          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \
+          "docker run -d \
+            --name ${{ env.CONTAINER_NAME }} \
+            -p ${{ env.APP_PORT }}:8000 \
+            ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
 
       # - name: Show running container
       #   run: | 
