@@ -132,4 +132,4 @@ jobs:
       - name: Stop container
         if: always()
         # Clean up even if an earlier step fails.
-        run: ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} "docker rm -f "${CONTAINER_NAME} || true"
+        run: ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} "docker rm -f ${CONTAINER_NAME} || true"
