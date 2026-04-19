@@ -101,7 +101,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \
           "docker run -d \
-            --name ${{ env.CONTAINER_NAME }} \
+            --name ${{ env.CONTAINER_NAME }}-$(date -u +%Y%m%d%H%m) \
             -p ${{ env.APP_PORT }}:8000 \
             ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
 
