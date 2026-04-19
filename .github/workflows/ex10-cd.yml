@@ -68,11 +68,17 @@ jobs:
       
       - name: Listing files
         run: tree
-      - name: Copying & Executing scripts
+
+      - name: Copy scripts folder
         run: |
-          scp -i -r ~/.ssh/ec2_key ./scripts/ ubuntu@${{ vars.EC2_IP }}:/tmp/
-          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} "chmod +x -R /tmp/scripts/"
-          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} "bash /tmp/scripts/assessment/prepare-ubuntu-vm.sh"
+         scp -r -i ~/.ssh/ec2_key ./scripts \
+            ubuntu@${{ vars.EC2_IP }}:/tmp/
+
+      - name: Execute target script
+        run: |
+          ssh -i ~/.ssh/ec2_key ubuntu@${{ vars.EC2_IP }} \
+          "chmod +x /tmp/scripts/assessment/prepare-ubuntu-vm.sh && \
+          /tmp/scripts/assessment/prepare-ubuntu-vm.sh"
          
       
       # - name: Login to ECR
